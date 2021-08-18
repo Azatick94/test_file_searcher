@@ -13,12 +13,13 @@ import java.util.stream.Stream;
  * https://stackabuse.com/java-list-files-in-a-directory/
  */
 public class Main {
+    // bashExecutor should be specified
+    private static final String bashExecutor = "C:/Program Files/Git/bin/bash.exe";
+    private static final String patternToFindInFile = "text";
+
     private static List<String> filesFromWalk;
 
     public static void main(String[] args) throws IOException {
-
-        // bashExecutor should be specified
-        String bashExecutor = "C:/Program Files/Git/bin/bash.exe";
 
         // bash script running
         String script = System.getProperty("user.dir");
@@ -51,12 +52,13 @@ public class Main {
                 .collect(Collectors.toList());
         for (String subdir : filesAbsoluteDirectory) {
             if (Files.isRegularFile(Path.of(subdir))) {
-                filesFromWalk.add(subdir);
+                if (subdir.contains(patternToFindInFile)) {
+                    filesFromWalk.add(subdir);
+                }
             } else {
                 fileListApproach(subdir);
             }
         }
-
         return filesFromWalk;
     }
 
@@ -65,7 +67,9 @@ public class Main {
         try (Stream<Path> walk = Files.walk(Paths.get(directory))) {
             // We want to find only regular files
             return walk.filter(Files::isRegularFile)
-                    .map(Path::toString).collect(Collectors.toList());
+                    .map(Path::toString)
+                    .filter(dir -> dir.contains(patternToFindInFile))
+                    .collect(Collectors.toList());
         } catch (IOException e) {
             e.printStackTrace();
         }
