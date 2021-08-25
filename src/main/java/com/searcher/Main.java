@@ -1,4 +1,4 @@
-package main.java;
+package com.searcher;
 
 import java.io.*;
 import java.nio.file.Files;
