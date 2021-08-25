@@ -21,12 +21,8 @@ public class Main {
 
     public static void main(String[] args) throws IOException {
 
-        // bash script running
-        String script = System.getProperty("user.dir");
-        String scriptDir = script + "/src/main/resources/bash/example-test-folder.sh";
-        String[] cmd = new String[]{bashExecutor, scriptDir};
-        Process proc = Runtime.getRuntime().exec(cmd);
-        readBashRunResult(proc);
+        // directory initialization using bash script
+        prepareExampleDirectory();
 
         String homeDirectory = System.getProperty("user.home");
         homeDirectory = homeDirectory + "\\" + "test_directory";
@@ -39,6 +35,24 @@ public class Main {
 
         System.out.println("2) search using Java 8 Stream API and Files.walk:");
         printBeautifiedList(Objects.requireNonNull(filesWalkStreamApiApproach(homeDirectory)));
+
+    }
+
+    private static void prepareExampleDirectory() throws IOException {
+        // bash script running
+        String script = System.getProperty("user.dir");
+        String scriptDir = script + "/src/main/resources/bash/example-test-folder.sh";
+        String[] cmd = new String[]{bashExecutor, scriptDir};
+        Process proc = Runtime.getRuntime().exec(cmd);
+        readBashRunResult(proc);
+    }
+
+    private static void readBashRunResult(Process process) throws IOException {
+        BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
+        String s;
+        while ((s = stdInput.readLine()) != null) {
+            System.out.println(s);
+        }
 
     }
 
@@ -83,15 +97,5 @@ public class Main {
         }
         System.out.println("-".repeat(50));
     }
-
-    private static void readBashRunResult(Process process) throws IOException {
-        BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
-        String s;
-        while ((s = stdInput.readLine()) != null) {
-            System.out.println(s);
-        }
-
-    }
-
 
 }
