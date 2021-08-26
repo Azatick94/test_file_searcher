@@ -1,5 +1,6 @@
 package com.searcher;
 
+import com.searcher.entities.PotentialFile;
 import com.searcher.threads.MyThread;
 
 import java.io.BufferedReader;
@@ -11,6 +12,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ForkJoinPool;
 
 /**
  * Resources
@@ -19,6 +21,7 @@ import java.util.concurrent.Executors;
 public class Main {
     // bashExecutor should be specified
     private static final String bashExecutor = "C:/Program Files/Git/bin/bash.exe";
+    private static final String homeDirectory = System.getProperty("user.home") + "\\" + "test_directory";
 
     public static final String patternToFindInFile = "text";
     public static volatile List<String> filesFromWalk;
@@ -26,10 +29,8 @@ public class Main {
 
     public static void main(String[] args) throws IOException, InterruptedException {
 
-        // directory initialization using bash script
+        // env preparation
         prepareExampleDirectory();
-        // directory where to test
-        String homeDirectory = System.getProperty("user.home") + "\\" + "test_directory";
         System.out.println("\n");
 
         // realization
@@ -37,14 +38,24 @@ public class Main {
         queue = new LinkedList<>();
         queue.add(homeDirectory);
 
-        runThreadsSimpleApproach();
+        // threads doing job
+        // runThreadsSimpleApproach();
         // runThreadsUsingThreadPool();
+
+        // ForkJoinPool Approach
+        PotentialFile rootPotentialFile = new PotentialFile(homeDirectory);
+        // №1 - ForkJoinPool via Task
+        filesFromWalk = new ForkJoinPool().invoke(new FilePatternSearcherTask(rootPotentialFile));
+        // №2 - ForkJoinPool via Action
+        // new ForkJoinPool().invoke(new FilePatternSearcherAction(rootPotentialFile));
 
         System.out.println("List of files matching pattern: ");
         printBeautifiedList(filesFromWalk);
     }
 
     public static void runThreadsSimpleApproach() throws InterruptedException {
+
+        // creating 3 threads and starting them.
         Thread thread1 = new Thread(new MyThread());
         thread1.setName("№1");
         Thread thread2 = new Thread(new MyThread());
@@ -73,6 +84,7 @@ public class Main {
         executor.submit(new MyThread());
     }
 
+    // --------------------------------
     private static void printBeautifiedList(List<String> lst) {
         System.out.println("-".repeat(50));
         for (String item : lst) {
@@ -98,5 +110,4 @@ public class Main {
         }
 
     }
-
 }
