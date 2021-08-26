@@ -1,12 +1,16 @@
 package com.searcher;
 
-import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import com.searcher.threads.MyThread;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Resources
@@ -15,27 +19,66 @@ import java.util.stream.Stream;
 public class Main {
     // bashExecutor should be specified
     private static final String bashExecutor = "C:/Program Files/Git/bin/bash.exe";
-    private static final String patternToFindInFile = "text";
 
-    private static List<String> filesFromWalk;
+    public static final String patternToFindInFile = "text";
+    public static volatile List<String> filesFromWalk;
+    public static volatile Queue<String> queue = new LinkedList<>();
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, InterruptedException {
 
         // directory initialization using bash script
         prepareExampleDirectory();
-
-        String homeDirectory = System.getProperty("user.home");
-        homeDirectory = homeDirectory + "\\" + "test_directory";
+        // directory where to test
+        String homeDirectory = System.getProperty("user.home") + "\\" + "test_directory";
         System.out.println("\n");
 
-        // running different approaches
-        System.out.println("1) simple approach using File.list():");
+        // realization
         filesFromWalk = new ArrayList<>();
-        printBeautifiedList(fileListApproach(homeDirectory));
+        queue = new LinkedList<>();
+        queue.add(homeDirectory);
 
-        System.out.println("2) search using Java 8 Stream API and Files.walk:");
-        printBeautifiedList(Objects.requireNonNull(filesWalkStreamApiApproach(homeDirectory)));
+        runThreadsSimpleApproach();
+        // runThreadsUsingThreadPool();
 
+        System.out.println("List of files matching pattern: ");
+        printBeautifiedList(filesFromWalk);
+    }
+
+    public static void runThreadsSimpleApproach() throws InterruptedException {
+        Thread thread1 = new Thread(new MyThread());
+        thread1.setName("№1");
+        Thread thread2 = new Thread(new MyThread());
+        thread2.setName("№2");
+        Thread thread3 = new Thread(new MyThread());
+        thread3.setName("№3");
+
+        thread1.start();
+        Thread.sleep(200);
+        thread2.start();
+        Thread.sleep(200);
+        thread3.start();
+
+        // waiting when job is done
+        thread1.join();
+        thread2.join();
+        thread3.join();
+    }
+
+    public static void runThreadsUsingThreadPool() throws InterruptedException {
+        ExecutorService executor = Executors.newFixedThreadPool(3);
+        executor.submit(new MyThread());
+        Thread.sleep(200);
+        executor.submit(new MyThread());
+        Thread.sleep(200);
+        executor.submit(new MyThread());
+    }
+
+    private static void printBeautifiedList(List<String> lst) {
+        System.out.println("-".repeat(50));
+        for (String item : lst) {
+            System.out.println(item);
+        }
+        System.out.println("-".repeat(50));
     }
 
     private static void prepareExampleDirectory() throws IOException {
@@ -54,48 +97,6 @@ public class Main {
             System.out.println(s);
         }
 
-    }
-
-    // 1) simple approach to find files in directory with recursion, before Java 8
-    public static List<String> fileListApproach(String directory) {
-
-        File f = new File(directory);
-        List<String> files = Arrays.asList(Objects.requireNonNull(f.list()));
-        List<String> filesAbsoluteDirectory = files.stream()
-                .map(dir -> directory + "\\" + dir)
-                .collect(Collectors.toList());
-        for (String subdir : filesAbsoluteDirectory) {
-            if (Files.isRegularFile(Path.of(subdir))) {
-                if (subdir.contains(patternToFindInFile)) {
-                    filesFromWalk.add(subdir);
-                }
-            } else {
-                fileListApproach(subdir);
-            }
-        }
-        return filesFromWalk;
-    }
-
-    // 2) search using Java 8 Stream API and Files.walk
-    public static List<String> filesWalkStreamApiApproach(String directory) {
-        try (Stream<Path> walk = Files.walk(Paths.get(directory))) {
-            // We want to find only regular files
-            return walk.filter(Files::isRegularFile)
-                    .map(Path::toString)
-                    .filter(dir -> dir.contains(patternToFindInFile))
-                    .collect(Collectors.toList());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    private static void printBeautifiedList(List<String> lst) {
-        System.out.println("-".repeat(50));
-        for (String item : lst) {
-            System.out.println(item);
-        }
-        System.out.println("-".repeat(50));
     }
 
 }
