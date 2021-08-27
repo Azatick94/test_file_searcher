@@ -17,7 +17,7 @@ public class MyThread implements Runnable {
     public void run() {
         System.out.println("STARTING thread number " + Thread.currentThread().getName() + "!!!");
 
-        while (!queue.isEmpty()) {
+        while (!queue.isEmpty() && !Thread.currentThread().isInterrupted()) {
 
             String directory = queue.poll();
             PotentialFile pFile = new PotentialFile(directory);

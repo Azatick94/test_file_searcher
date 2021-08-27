@@ -11,7 +11,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.*;
-import java.util.function.Predicate;
 
 /**
  * Resources
@@ -66,6 +65,7 @@ public class Main {
         for (Future<?> task: futureTasks) {
             task.get(10, TimeUnit.SECONDS); // wait the end of each task
         }
+
         service.shutdown();
     }
 
