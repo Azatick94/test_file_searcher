@@ -21,10 +21,9 @@ public class PotentialFile {
         if (!this.isRegularFile()) {
             File f = new File(this.getDirectory());
             List<String> files = Arrays.asList(Objects.requireNonNull(f.list()));
-            List<PotentialFile> filesAbsoluteDirectory = files.stream()
+            return files.stream()
                     .map(dir -> new PotentialFile(this.getDirectory() + "\\" + dir))
                     .collect(Collectors.toList());
-            return filesAbsoluteDirectory;
         } else {
             return new ArrayList<>();
         }

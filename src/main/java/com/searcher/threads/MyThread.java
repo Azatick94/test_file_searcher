@@ -15,7 +15,7 @@ import static com.searcher.Main.queue;
 public class MyThread implements Runnable {
     @Override
     public void run() {
-        System.out.println("STARTING thread number " + Thread.currentThread().getName() + "!!! \n");
+        System.out.println("STARTING thread number " + Thread.currentThread().getName() + "!!!");
 
         while (!queue.isEmpty()) {
 
@@ -24,7 +24,7 @@ public class MyThread implements Runnable {
 
             System.out.println("Thread " + Thread.currentThread().getName() + " processing directory: " + directory);
             try {
-                System.out.println("Thread " + Thread.currentThread().getName() + " is sleeping" + "\n");
+                System.out.println("Thread " + Thread.currentThread().getName() + " is sleeping");
                 Thread.sleep(100);
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -42,6 +42,6 @@ public class MyThread implements Runnable {
                 filesFromWalk.add(directory);
             }
         }
-        System.out.println("FINISHED Thread " + Thread.currentThread().getName() + " has done job !!! \n");
+        System.out.println("FINISHED Thread " + Thread.currentThread().getName() + " has done job !!!");
     }
 }

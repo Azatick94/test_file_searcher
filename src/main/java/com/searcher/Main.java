@@ -10,9 +10,8 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.*;
+import java.util.function.Predicate;
 
 /**
  * Resources
@@ -27,61 +26,47 @@ public class Main {
     public static volatile List<String> filesFromWalk;
     public static volatile Queue<String> queue = new LinkedList<>();
 
-    public static void main(String[] args) throws IOException, InterruptedException {
+    public static void main(String[] args) throws IOException, InterruptedException, ExecutionException, TimeoutException {
 
         // env preparation
         prepareExampleDirectory();
-        System.out.println("\n");
 
         // realization
         filesFromWalk = new ArrayList<>();
         queue = new LinkedList<>();
         queue.add(homeDirectory);
 
-        // threads doing job
-        // runThreadsSimpleApproach();
-        // runThreadsUsingThreadPool();
+        // №1 - Multithreading using ExecutorService
+        runThreadsUsingThreadPool();
 
         // ForkJoinPool Approach
         PotentialFile rootPotentialFile = new PotentialFile(homeDirectory);
-        // №1 - ForkJoinPool via Task
-        filesFromWalk = new ForkJoinPool().invoke(new FilePatternSearcherTask(rootPotentialFile));
-        // №2 - ForkJoinPool via Action
-        // new ForkJoinPool().invoke(new FilePatternSearcherAction(rootPotentialFile));
+        // №2 - ForkJoinPool via Task
+        // filesFromWalk = new ForkJoinPool().invoke(new FilePatternSearcherTask(rootPotentialFile));
+        // №3 - ForkJoinPool via Task and using Functional Interface
+        // filesFromWalk = new ForkJoinPool().invoke(new FilePatternSearcherWithFunctionalInterfaceTask(rootPotentialFile));
 
         System.out.println("List of files matching pattern: ");
         printBeautifiedList(filesFromWalk);
     }
 
-    public static void runThreadsSimpleApproach() throws InterruptedException {
+    public static void runThreadsUsingThreadPool() throws InterruptedException, ExecutionException, TimeoutException {
+        int numberOfThreads = 3;
+        List<Future<?>> futureTasks = new ArrayList<>();
 
-        // creating 3 threads and starting them.
-        Thread thread1 = new Thread(new MyThread());
-        thread1.setName("№1");
-        Thread thread2 = new Thread(new MyThread());
-        thread2.setName("№2");
-        Thread thread3 = new Thread(new MyThread());
-        thread3.setName("№3");
+        ExecutorService service = Executors.newFixedThreadPool(numberOfThreads);
+        for (int i = 0; i < numberOfThreads; i++) {
+            Thread thread = new Thread(new MyThread());
+            thread.setName("thread number " + (i + 1));
+            Future<?> futureResult = service.submit(thread);
+            Thread.sleep(200);
+            futureTasks.add(futureResult);
+        }
 
-        thread1.start();
-        Thread.sleep(200);
-        thread2.start();
-        Thread.sleep(200);
-        thread3.start();
-
-        // waiting when job is done
-        thread1.join();
-        thread2.join();
-        thread3.join();
-    }
-
-    public static void runThreadsUsingThreadPool() throws InterruptedException {
-        ExecutorService executor = Executors.newFixedThreadPool(3);
-        executor.submit(new MyThread());
-        Thread.sleep(200);
-        executor.submit(new MyThread());
-        Thread.sleep(200);
-        executor.submit(new MyThread());
+        for (Future<?> task: futureTasks) {
+            task.get(10, TimeUnit.SECONDS); // wait the end of each task
+        }
+        service.shutdown();
     }
 
     // --------------------------------
