@@ -1,5 +1,6 @@
 package com.searcher.threads;
 
+import com.searcher.Main;
 import com.searcher.entities.PotentialFile;
 
 import java.io.File;
@@ -17,14 +18,14 @@ public class MyThread implements Runnable {
     public void run() {
         System.out.println("STARTING thread number " + Thread.currentThread().getName() + "!!!");
 
-        while (!queue.isEmpty() && !Thread.currentThread().isInterrupted()) {
+        while (!queue.isEmpty() && !Main.exit) {
 
             String directory = queue.poll();
             PotentialFile pFile = new PotentialFile(directory);
 
             System.out.println("Thread " + Thread.currentThread().getName() + " processing directory: " + directory);
             try {
-                System.out.println("Thread " + Thread.currentThread().getName() + " is sleeping");
+                // System.out.println("Thread " + Thread.currentThread().getName() + " is sleeping");
                 Thread.sleep(100);
             } catch (InterruptedException e) {
                 e.printStackTrace();
