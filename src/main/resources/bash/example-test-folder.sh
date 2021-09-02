@@ -23,3 +23,4 @@ mkdir folder/folder1/folder2
 touch folder/folder1/folder2/text6.txt
 
 echo "bash script finished!!!"
+echo ""
