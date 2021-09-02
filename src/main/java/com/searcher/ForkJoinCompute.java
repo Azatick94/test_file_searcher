@@ -1,4 +1,4 @@
-package com.searcher.util;
+package com.searcher;
 
 import java.util.List;
 

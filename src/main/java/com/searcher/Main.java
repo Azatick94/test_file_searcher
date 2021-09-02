@@ -2,8 +2,6 @@ package com.searcher;
 
 import com.searcher.entities.PotentialFile;
 import com.searcher.mbean.ThreadController;
-import com.searcher.threads.MyBlockingQueueThread;
-import com.searcher.threads.MyThread;
 
 import javax.management.*;
 import java.io.BufferedReader;
@@ -11,10 +9,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.*;
+import java.util.concurrent.ForkJoinPool;
 
 /**
  * Resources
@@ -27,12 +23,11 @@ public class Main {
 
     public static final String patternToFindInFile = "text";
     public static volatile List<String> filesFromWalk;
-    public static volatile Queue<String> queue = new LinkedList<>();
-    public static volatile BlockingQueue<String> blockingQueue = new LinkedBlockingQueue<>();
 
+    // TODO
     public static volatile boolean exit = false;
 
-    public static void main(String[] args) throws IOException, InterruptedException, ExecutionException, TimeoutException, MalformedObjectNameException, NotCompliantMBeanException, InstanceAlreadyExistsException, MBeanRegistrationException {
+    public static void main(String[] args) throws IOException, MalformedObjectNameException, NotCompliantMBeanException, InstanceAlreadyExistsException, MBeanRegistrationException {
 
         // --------------------------------
         // env preparation
@@ -42,98 +37,13 @@ public class Main {
         // prepare MBeans
         prepareMBeans();
 
-        // realization
-        queue = new LinkedList<>();
-        queue.add(homeDirectory);
-
-        int capacity = 10;
-        blockingQueue = new LinkedBlockingQueue<>(capacity);
-        blockingQueue.add(homeDirectory);
-        // --------------------------------
-
-        // №1 - Multithreading using ExecutorService
-        // runThreadsUsingThreadPool(3,2);
-
-        // №2 - Multithreading using ExecutorService with BlockingQueue
-        // runThreadUsingThreadPoolWithBlockingQueue(3, 2);
-
-        // №3 - Multithreading using ExecutorService with BlockingQueue without timeout to test Mbean
-        // runThreadUsingThreadPoolWithBlockingQueueInfinite(3);
-
-        // ForkJoinPool Approach
-        // №3 - ForkJoinPool via Task
-        // runForkJoinPoolUsingTask();
-        // №4 - ForkJoinPool via Task and using Functional Interface
-        // runForkJoinPoolWithFunctionalInterfaceTask();
-    }
-
-    public static void runThreadsUsingThreadPool(int numberOfThreads, int timeToRunInSeconds) throws InterruptedException, ExecutionException, TimeoutException {
-        filesFromWalk = new ArrayList<>();
-
-        List<Future<?>> futureTasks = new ArrayList<>();
-        List<Thread> lstThreads = new ArrayList<>();
-
-        ExecutorService service = Executors.newFixedThreadPool(numberOfThreads);
-        for (int i = 0; i < numberOfThreads; i++) {
-            Thread thread = new Thread(new MyThread());
-            thread.setName("thread number " + (i + 1));
-            Future<?> futureResult = service.submit(thread);
-            Thread.sleep(200);
-            lstThreads.add(thread);
-            futureTasks.add(futureResult);
-        }
-
-        for (Future<?> task : futureTasks) {
-            task.get(timeToRunInSeconds, TimeUnit.SECONDS); // wait the end of each task no more than 10 seconds
-        }
-
-        service.shutdown();
-        printBeautifiedList(filesFromWalk);
-    }
-
-    public static void runThreadUsingThreadPoolWithBlockingQueue(int numberOfThreads, int timeToRunInSeconds) throws InterruptedException {
-        filesFromWalk = new ArrayList<>();
-
-        ExecutorService service = Executors.newFixedThreadPool(numberOfThreads);
-        for (int i = 0; i < numberOfThreads; i++) {
-            Thread thread = new Thread(new MyBlockingQueueThread(blockingQueue));
-            thread.setName("thread number " + (i + 1));
-            service.submit(thread);
-        }
-        Thread.sleep(timeToRunInSeconds * 1000L);
-        exit = true;
-        service.shutdown();
-
-        Thread.sleep(200);
-        printBeautifiedList(filesFromWalk);
-    }
-
-    public static void runThreadUsingThreadPoolWithBlockingQueueInfinite(int numberOfThreads) throws InterruptedException {
-        filesFromWalk = new ArrayList<>();
-
-        ExecutorService service = Executors.newFixedThreadPool(numberOfThreads);
-        for (int i = 0; i < numberOfThreads; i++) {
-            Thread thread = new Thread(new MyBlockingQueueThread(blockingQueue));
-            thread.setName("thread number " + (i + 1));
-            service.submit(thread);
-        }
-
-        while (!exit) {
-            Thread.sleep(200);
-        }
-        service.shutdown();
-        printBeautifiedList(filesFromWalk);
-    }
-
-    public static void runForkJoinPoolUsingTask() {
-        PotentialFile rootPotentialFile = new PotentialFile(homeDirectory);
-        filesFromWalk = new ForkJoinPool().invoke(new FilePatternSearcherTask(rootPotentialFile));
-        printBeautifiedList(filesFromWalk);
+        // ForkJoinPool via Task and using Functional Interface
+        runForkJoinPoolWithFunctionalInterfaceTask();
     }
 
     public static void runForkJoinPoolWithFunctionalInterfaceTask() {
         PotentialFile rootPotentialFile = new PotentialFile(homeDirectory);
-        filesFromWalk = new ForkJoinPool().invoke(new FilePatternSearcherWithFunctionalInterfaceTask(rootPotentialFile));
+        filesFromWalk = new ForkJoinPool().invoke(new FilePatternSearcherFunctionalTask(rootPotentialFile));
         printBeautifiedList(filesFromWalk);
     }
 
