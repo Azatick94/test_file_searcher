@@ -1,7 +1,6 @@
 package com.searcher;
 
 import com.searcher.entities.PotentialFile;
-import com.searcher.util.ForkJoinCompute;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -10,12 +9,12 @@ import java.util.concurrent.ForkJoinTask;
 
 import static com.searcher.Main.patternToFindInFile;
 
-public class FilePatternSearcherWithFunctionalInterfaceTask extends ForkJoinTask<List<String>> {
+public class FilePatternSearcherFunctionalTask extends ForkJoinTask<List<String>> {
 
     List<String> result;
     private final PotentialFile pFile;
 
-    public FilePatternSearcherWithFunctionalInterfaceTask(PotentialFile pFile) {
+    public FilePatternSearcherFunctionalTask(PotentialFile pFile) {
         this.pFile = pFile;
     }
 
@@ -39,18 +38,19 @@ public class FilePatternSearcherWithFunctionalInterfaceTask extends ForkJoinTask
                 filesFromWalk.add(pFile.getDirectory());
             }
 
-            List<FilePatternSearcherTask> subTasks = new LinkedList<>();
+            List<FilePatternSearcherFunctionalTask> subTasks = new LinkedList<>();
             for (PotentialFile child : pFile.getChildren()) {
-                FilePatternSearcherTask task = new FilePatternSearcherTask(child);
-                task.fork(); // asynchronous start of job
+                FilePatternSearcherFunctionalTask task = new FilePatternSearcherFunctionalTask(child);
+                // asynchronous start of job
+                task.fork();
                 subTasks.add(task);
             }
 
-            for (FilePatternSearcherTask task : subTasks) {
-                filesFromWalk.addAll(task.join()); // wait end of task
+            for (FilePatternSearcherFunctionalTask task : subTasks) {
+                // wait end of task
+                filesFromWalk.addAll(task.join());
             }
             return filesFromWalk;
-
         };
 
         result = fj.compute();
